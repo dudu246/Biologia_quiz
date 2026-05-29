@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BioQuiz ⚡</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#020C1B;--surf:#071628;--surf2:#0B1F3A;--surf3:#0F2850;
+  --cyan:#00E5FF;--pink:#FF0066;--gold:#FFD700;
+  --green:#00FF88;--purple:#A855F7;--orange:#FF6B35;
+  --text:#C8E6FF;--muted:#3D5A78;--border:rgba(0,229,255,0.13);
+}
+body{background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.65}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes glow{0%,100%{text-shadow:0 0 18px var(--cyan),0 0 40px rgba(0,229,255,.3)}50%{text-shadow:0 0 36px var(--cyan),0 0 80px rgba(0,229,255,.5)}}
+@keyframes correctPop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scoreFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(1.5)}}
+@keyframes countPop{0%{transform:scale(1.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.screen{animation:fadeUp .38s ease both;}
+.slide-in{animation:slideIn .3s ease both;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(0,229,255,0.18);border-radius:2px;}
+input,select{outline:none;transition:border-color .2s;font-family:'Rajdhani',sans-serif;}
+input:focus,select:focus{border-color:var(--cyan)!important;}
+button{font-family:'Rajdhani',sans-serif;cursor:pointer;}
+
+/* BACKGROUND */
+#bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:#fff;}
+.glow-orb{position:absolute;border-radius:50%;}
+
+/* SCREENS */
+.screen-wrap{position:relative;z-index:1;min-height:100vh;}
+.hidden{display:none!important;}
+
+/* LOGO */
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:2px;line-height:1;animation:glow 3s ease-in-out infinite;}
+.logo .bio{color:#00E5FF;}
+.logo .quiz{color:#fff;}
+.logo .bolt{color:#FF0066;vertical-align:super;margin-left:2px;}
+.logo-lg{font-size:52px;}
+.logo-md{font-size:32px;}
+.logo-sm{font-size:22px;}
+
+/* SKIN BADGE */
+.skin-badge{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:18px;}
+.card2{background:var(--surf2);border:1px solid var(--border);border-radius:12px;}
+
+/* BUTTONS */
+.btn{border:none;border-radius:11px;padding:13px 20px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.btn-cyan{background:linear-gradient(135deg,var(--cyan),#00B8CC);color:#000;box-shadow:0 0 28px rgba(0,229,255,0.3);}
+.btn-pink{background:linear-gradient(135deg,var(--pink),#CC0055);color:#fff;box-shadow:0 0 28px rgba(255,0,102,0.25);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#CC9900);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn:not(:disabled):hover{transform:translateY(-1px);filter:brightness(1.1);}
+
+/* TOGGLE SWITCH */
+.toggle-wrap{display:flex;align-items:center;gap:10px;background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;}
+.toggle{position:relative;width:46px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--surf3);border-radius:24px;transition:.3s;cursor:pointer;}
+.toggle-slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:rgba(0,229,255,0.25);border:1px solid var(--cyan);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(22px);background:var(--cyan);}
+
+/* XP BAR */
+.xp-bar-track{height:5px;background:var(--surf3);border-radius:3px;overflow:hidden;}
+.xp-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .5s ease;}
+.lv-badge{background:rgba(0,229,255,0.2);border-radius:4px;padding:1px 7px;font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);font-weight:700;white-space:nowrap;}
+
+/* TIMER */
+.timer-text{font-family:'Orbitron',sans-serif;font-weight:900;line-height:1;}
+.timer-sub{font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
+
+/* OPTION BUTTONS */
+.opt-btn{display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:12px;width:100%;text-align:left;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;transition:all .15s ease;border:1.5px solid var(--border);background:var(--surf2);color:var(--text);}
+.opt-btn:not(:disabled):hover{transform:translateX(7px);border-color:var(--cyan);}
+.opt-btn.selected{border-color:var(--cyan);background:rgba(0,229,255,0.09);}
+.opt-btn.correct{border-color:var(--green)!important;background:rgba(0,255,136,0.14)!important;animation:correctPop .35s ease;}
+.opt-btn.wrong{border-color:var(--pink)!important;background:rgba(255,0,102,0.14)!important;animation:wrongShake .4s ease;}
+.opt-btn:disabled{cursor:default;}
+.opt-label{width:33px;height:33px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--surf);border:1px solid var(--border);border-radius:22px;padding:28px;width:100%;max-width:430px;animation:fadeUp .3s ease;position:relative;}
+.modal-close{position:absolute;top:14px;right:16px;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:4px;}
+
+/* SIDEBAR */
+.sidebar{width:200px;background:rgba(7,22,40,0.96);border-right:1px solid var(--border);padding:14px;overflow-y:auto;flex-shrink:0;}
+.rank-item{display:flex;align-items:center;gap:7px;padding:8px 9px;border-radius:10px;border:1px solid var(--border);background:var(--surf2);margin-bottom:6px;transition:all .3s;}
+.rank-item.is-me{border-color:var(--cyan);background:rgba(0,229,255,0.07);}
+
+/* SCORE FLOAT */
+.score-float{position:absolute;top:12%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;color:var(--green);animation:scoreFloat 1.6s ease both;pointer-events:none;z-index:10;text-shadow:0 0 40px var(--green);}
+
+/* PROGRESS BAR */
+.prog-bar{height:3px;background:var(--surf2);flex-shrink:0;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .5s;}
+
+/* FEEDBACK BOX */
+.feedback-correct{background:rgba(0,255,136,0.09);border:1px solid var(--green);color:var(--green);}
+.feedback-wrong{background:rgba(255,0,102,0.09);border:1px solid var(--pink);color:var(--pink);}
+
+/* COUNTDOWN OVERLAY */
+#countdown-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.count-num{font-family:'Orbitron',sans-serif;font-size:130px;font-weight:900;color:var(--cyan);animation:countPop .9s ease;text-shadow:0 0 80px var(--cyan),0 0 160px rgba(0,229,255,.3);}
+
+/* PODIUM */
+.podium-block{text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;}
+.podium-bar{border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:10px;font-size:22px;width:100%;}
+
+/* LABEL */
+.field-label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:1px;font-family:'Orbitron',sans-serif;}
+.field-input{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:11px 14px;font-size:14px;font-family:'Rajdhani',sans-serif;}
+.field-select{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:11px 14px;font-size:14px;font-family:'Rajdhani',sans-serif;}
+
+/* MISSION */
+.mission-card{background:var(--surf2);border-radius:12px;padding:14px;border:1px solid var(--border);}
+.mission-done{opacity:.6;border-color:var(--green)!important;}
+.mission-prog{height:4px;background:var(--surf3);border-radius:2px;overflow:hidden;margin-top:8px;}
+.mission-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .5s;}
+.mission-fill.done{background:var(--green);}
+
+/* ACTION CARDS */
+.action-card{background:var(--surf);border-radius:16px;padding:20px 14px;text-align:center;transition:all .22s;width:100%;border:1px solid transparent;}
+.action-card:hover{transform:translateY(-3px);}
+
+/* SKIN CARD */
+.skin-card{background:var(--surf2);border:2px solid var(--surf3);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;position:relative;transition:all .2s;}
+.skin-card.equipped{border-color:var(--green);}
+.skin-card.locked{opacity:.5;cursor:not-allowed;}
+.skin-dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;}
+
+/* VISIBILITY BADGE */
+.vis-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Orbitron',sans-serif;letter-spacing:1px;}
+.vis-public{background:rgba(0,255,136,0.15);color:var(--green);border:1px solid var(--green);}
+.vis-private{background:rgba(255,0,102,0.12);color:var(--pink);border:1px solid var(--pink);}
+
+/* WAITING INDICATOR */
+.waiting-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin:0 3px;}
+.waiting-dot:nth-child(1){background:var(--cyan);animation:pulse 1.2s .0s ease-in-out infinite;}
+.waiting-dot:nth-child(2){background:var(--cyan);animation:pulse 1.2s .2s ease-in-out infinite;}
+.waiting-dot:nth-child(3){background:var(--cyan);animation:pulse 1.2s .4s ease-in-out infinite;}
+
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .logo-lg{font-size:38px;}
+  .modal-box{padding:20px;}
+  .count-num{font-size:90px;}
+}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div id="bg-canvas"></div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="screen-login" class="screen-wrap screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100vh;">
+  <div id="login-decorations"></div>
+  <div style="text-align:center;max-width:420px;width:100%;">
+    <div style="font-size:62px;margin-bottom:12px;animation:float 4s ease-in-out infinite;">🧬</div>
+    <div class="logo logo-lg" style="margin-bottom:8px;"><span class="bio">BIO</span><span class="quiz">QUIZ</span><span class="bolt" style="font-size:26px;">⚡</span></div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:36px;font-weight:300;letter-spacing:.5px;">Quiz de Biologia competitivo em tempo real</p>
+    <div class="card" style="padding:34px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Faça login para competir com jogadores do mundo todo</div>
+      <button id="btn-google-login" style="width:100%;background:#fff;color:#111;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px;border:none;box-shadow:0 4px 24px rgba(255,255,255,0.14);transition:all .2s;font-family:'Rajdhani',sans-serif;">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Entrar com Google
+      </button>
+      <div style="margin-top:22px;background:var(--surf2);border-radius:12px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text);padding:4px 0;">🏆 Rankings ao vivo e competição real</div>
+        <div style="font-size:13px;color:var(--text);padding:4px 0;">🎮 Salas multiplayer público ou privado</div>
+        <div style="font-size:13px;color:var(--text);padding:4px 0;">⚡ Sistema de XP, níveis e missões</div>
+        <div style="font-size:13px;color:var(--text);padding:4px 0;">🎭 Skins e avatares desbloqueáveis</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ HOME ══════════════ -->
+<div id="screen-home" class="screen-wrap hidden" style="padding:18px 16px;max-width:1200px;margin:0 auto;">
+  <!-- TOP BAR -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+    <div class="logo logo-sm"><span class="bio">BIO</span><span class="quiz">QUIZ</span><span class="bolt" style="font-size:11px;">⚡</span></div>
+    <div id="home-profile-btn" style="display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:10px 16px;cursor:pointer;transition:all .2s;">
+      <div id="home-skin-badge"></div>
+      <div>
+        <div id="home-player-name" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="home-lv-badge" class="lv-badge"></div>
+          <div style="flex:1;min-width:60px;"><div class="xp-bar-track"><div id="home-xp-fill" class="xp-bar-fill" style="width:0%"></div></div></div>
+          <div id="home-xp-text" style="font-size:10px;color:var(--muted);"></div>
+        </div>
+      </div>
+      <div style="margin-left:8px;font-size:11px;color:var(--muted);">✏️</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:18px;align-items:start;">
+    <div>
+      <!-- WELCOME BANNER -->
+      <div style="background:linear-gradient(135deg,var(--surf) 0%,var(--surf3) 100%);border:1px solid var(--border);border-radius:20px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden;">
+        <div id="banner-skin-float" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:90px;opacity:.12;animation:float 4s ease-in-out infinite;pointer-events:none;"></div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;">BEM-VINDO DE VOLTA</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--text);margin-bottom:8px;">Olá, <span id="banner-name" style="color:var(--cyan);"></span>! 👋</div>
+        <div id="banner-stats" style="font-size:13px;color:var(--muted);"></div>
+      </div>
+
+      <!-- ACTION CARDS -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px;margin-bottom:18px;">
+        <button class="action-card" id="btn-create-room" style="border-color:rgba(0,229,255,.15);">
+          <div style="font-size:34px;margin-bottom:8px;">🏠</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:4px;">CRIAR SALA</div>
+          <div style="font-size:11px;color:var(--muted);">Seja o host</div>
+        </button>
+        <button class="action-card" id="btn-join-room" style="border-color:rgba(255,0,102,.15);">
+          <div style="font-size:34px;margin-bottom:8px;">🚀</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--pink);letter-spacing:1px;margin-bottom:4px;">ENTRAR EM SALA</div>
+          <div style="font-size:11px;color:var(--muted);">Use um código</div>
+        </button>
+        <button class="action-card" id="btn-solo" style="border-color:rgba(255,215,0,.15);">
+          <div style="font-size:34px;margin-bottom:8px;">⚡</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:4px;">JOGAR SOLO</div>
+          <div style="font-size:11px;color:var(--muted);">Pratique solo</div>
+        </button>
+        <button class="action-card" id="btn-profile" style="border-color:rgba(168,85,247,.15);">
+          <div style="font-size:34px;margin-bottom:8px;">🎭</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--purple);letter-spacing:1px;margin-bottom:4px;">MEU PERFIL</div>
+          <div style="font-size:11px;color:var(--muted);">Skins & stats</div>
+        </button>
+      </div>
+
+      <!-- MISSIONS -->
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--text);letter-spacing:1px;margin-bottom:14px;">⚡ MISSÕES ATIVAS</div>
+        <div id="missions-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- GLOBAL RANKING SIDEBAR -->
+    <div class="card" style="padding:18px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">🏆 RANKING GLOBAL</div>
+      <div id="global-ranking-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LOBBY ══════════════ -->
+<div id="screen-lobby" class="screen-wrap hidden" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100vh;">
+  <div style="max-width:500px;width:100%;">
+    <button id="btn-lobby-back" class="btn btn-ghost" style="margin-bottom:20px;font-size:12px;padding:8px 16px;">← Voltar</button>
+    <div class="card" style="padding:30px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--muted);letter-spacing:3px;margin-bottom:8px;">CÓDIGO DA SALA</div>
+        <div id="lobby-code" style="font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;color:var(--cyan);letter-spacing:10px;animation:glow 3s ease-in-out infinite;text-shadow:0 0 40px rgba(0,229,255,.5);"></div>
+        <div id="lobby-visibility-badge" style="margin-top:10px;"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">Compartilhe este código com seus amigos</div>
+      </div>
+
+      <!-- STATS BAR -->
+      <div style="display:flex;gap:0;justify-content:center;margin-bottom:22px;background:var(--surf2);border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+        <div style="text-align:center;padding:14px 20px;flex:1;border-right:1px solid var(--border);">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">QUESTÕES</div>
+          <div id="lobby-qcount" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:var(--text);"></div>
+        </div>
+        <div style="text-align:center;padding:14px 20px;flex:1;border-right:1px solid var(--border);">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">TEMPO/Q</div>
+          <div id="lobby-time" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:var(--text);"></div>
+        </div>
+        <div style="text-align:center;padding:14px 20px;flex:1;">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">JOGADORES</div>
+          <div id="lobby-pcount" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:var(--text);">1/45</div>
+        </div>
+      </div>
+
+      <!-- PLAYER LIST -->
+      <div style="margin-bottom:22px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;font-family:'Orbitron',sans-serif;">JOGADORES NA SALA</div>
+        <div id="lobby-players-list" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+      </div>
+
+      <div id="lobby-host-controls"></div>
+      <div id="lobby-guest-waiting" class="hidden" style="text-align:center;color:var(--muted);font-size:13px;padding:16px;background:var(--surf2);border-radius:10px;border:1px solid var(--border);">
+        <div style="margin-bottom:10px;">⏳ Aguardando o host iniciar a partida...</div>
+        <div><span class="waiting-dot"></span><span class="waiting-dot"></span><span class="waiting-dot"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ GAME ══════════════ -->
+<div id="screen-game" class="screen-wrap hidden" style="display:flex;flex-direction:column;min-height:100vh;">
+  <!-- PROGRESS -->
+  <div class="prog-bar"><div id="game-prog-fill" class="prog-fill" style="width:0%"></div></div>
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(7,22,40,0.92);backdrop-filter:blur(8px);">
+    <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--muted);">Q <span id="game-q-num" style="color:var(--cyan);"></span>/<span id="game-q-total"></span></div>
+    <div class="logo logo-sm"><span class="bio">BIO</span><span class="quiz">QUIZ</span><span class="bolt" style="font-size:11px;">⚡</span></div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--muted);">⚡ <span id="game-score" style="color:var(--gold);">0</span> pts</div>
+  </div>
+  <!-- BODY -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="game-sidebar">
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;">RANKING AO VIVO</div>
+      <div id="game-ranking-list"></div>
+    </div>
+    <!-- MAIN -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px;overflow-y:auto;position:relative;">
+      <div id="score-float-wrap"></div>
+      <div style="max-width:620px;width:100%;">
+        <!-- QUESTION -->
+        <div style="display:flex;gap:18px;align-items:flex-start;margin-bottom:22px;">
+          <div style="position:relative;flex-shrink:0;">
+            <svg id="timer-svg" width="92" height="92" viewBox="0 0 100 100" style="transform:rotate(-90deg);">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+              <circle id="timer-circle" cx="50" cy="50" r="40" fill="none" stroke="var(--cyan)" stroke-width="7" stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset .6s linear,stroke .3s;"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div id="timer-text" class="timer-text" style="font-size:26px;color:var(--cyan);"></div>
+              <div class="timer-sub">SEG</div>
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:9px;color:var(--muted);letter-spacing:3px;margin-bottom:10px;">BIOLOGIA • QUESTÃO <span id="game-q-badge"></span></div>
+            <div id="game-question" style="font-size:17px;font-weight:700;color:var(--text);line-height:1.55;"></div>
+          </div>
+        </div>
+        <!-- OPTIONS -->
+        <div id="game-options" style="display:flex;flex-direction:column;gap:9px;"></div>
+        <!-- FEEDBACK -->
+        <div id="game-feedback" class="hidden" style="margin-top:14px;padding:13px 18px;border-radius:12px;text-align:center;animation:fadeUp .3s ease;">
+          <div id="game-feedback-title" style="font-size:20px;font-weight:700;margin-bottom:3px;"></div>
+          <div id="game-feedback-sub" style="font-size:12px;color:var(--muted);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ RESULTS ══════════════ -->
+<div id="screen-results" class="screen-wrap hidden" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100vh;">
+  <div style="max-width:580px;width:100%;">
+    <div style="text-align:center;margin-bottom:26px;">
+      <div id="result-trophy" style="font-size:68px;margin-bottom:10px;animation:float 3s ease-in-out infinite;"></div>
+      <div id="result-rank-label" style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--gold);margin-bottom:18px;"></div>
+      <div style="display:inline-flex;gap:0;background:var(--surf);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+        <div style="padding:16px 22px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">PONTOS</div>
+          <div id="result-score" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--cyan);"></div>
+        </div>
+        <div style="padding:16px 22px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">XP GANHO</div>
+          <div id="result-xp" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--green);"></div>
+        </div>
+        <div style="padding:16px 22px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">ACERTOS</div>
+          <div id="result-correct" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--gold);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:20px;margin-bottom:18px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">PLACAR FINAL</div>
+      <div id="results-list"></div>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button id="btn-results-home" class="btn btn-ghost" style="flex:1;">🏠 HOME</button>
+      <button id="btn-results-again" class="btn btn-cyan" style="flex:2;">🔁 JOGAR NOVAMENTE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PROFILE ══════════════ -->
+<div id="screen-profile" class="screen-wrap hidden" style="padding:18px 16px;max-width:860px;margin:0 auto;">
+  <button id="btn-profile-back" class="btn btn-ghost" style="margin-bottom:20px;font-size:12px;padding:8px 16px;">← Voltar ao Menu</button>
+  <div class="card" style="padding:28px;margin-bottom:18px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;">
+    <div id="profile-skin-badge"></div>
+    <div style="flex:1;min-width:200px;">
+      <div id="profile-name-display" style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"></div>
+      <div id="profile-name-edit" class="hidden" style="display:flex;gap:8px;margin-bottom:6px;">
+        <input id="profile-name-input" class="field-input" style="font-size:18px;font-weight:700;flex:1;"/>
+        <button id="btn-save-name" style="background:var(--cyan);color:#000;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:16px;">✓</button>
+      </div>
+      <div id="profile-level-text" style="font-size:12px;color:var(--muted);margin-bottom:12px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="profile-lv-badge" class="lv-badge"></div>
+        <div style="flex:1;"><div class="xp-bar-track"><div id="profile-xp-fill" class="xp-bar-fill" style="width:0%"></div></div></div>
+        <div id="profile-xp-text" style="font-size:10px;color:var(--muted);"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="profile-stats-grid"></div>
+  </div>
+  <div class="card" style="padding:20px;">
+    <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--text);letter-spacing:1px;margin-bottom:16px;">🎭 SKINS & AVATARES</div>
+    <div id="skins-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:12px;"></div>
+    <div style="margin-top:16px;padding:12px 14px;background:var(--surf2);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--muted);">
+      💡 Ganhe XP completando partidas e missões para desbloquear novas skins!
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+<!-- CREATE ROOM -->
+<div id="modal-create" class="modal-backdrop hidden">
+  <div class="modal-box">
+    <button class="modal-close" data-close="modal-create">✕</button>
+    <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:22px;">🏠 CRIAR SALA</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label class="field-label">NOME DA SALA</label>
+        <input id="create-room-name" class="field-input" value="Minha Sala"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label class="field-label">Nº QUESTÕES</label>
+          <select id="create-qcount" class="field-select">
+            <option value="5">5 questões</option>
+            <option value="10" selected>10 questões</option>
+            <option value="15">15 questões</option>
+            <option value="20">20 questões</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">TEMPO/QUESTÃO</label>
+          <select id="create-time" class="field-select">
+            <option value="10">10 segundos</option>
+            <option value="15">15 segundos</option>
+            <option value="20" selected>20 segundos</option>
+            <option value="30">30 segundos</option>
+          </select>
+        </div>
+      </div>
+      <!-- VISIBILITY TOGGLE -->
+      <div>
+        <label class="field-label">VISIBILIDADE DA SALA</label>
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="create-is-private"/>
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <div id="vis-toggle-label" style="font-size:13px;font-weight:700;color:var(--text);">Sala Pública</div>
+            <div id="vis-toggle-desc" style="font-size:11px;color:var(--muted);">Aparece na listagem de salas</div>
+          </div>
+          <div id="vis-toggle-icon" style="font-size:22px;margin-left:auto;">🌐</div>
+        </div>
+      </div>
+      <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--muted);">
+        👥 Capacidade máxima: <span style="color:var(--cyan);font-weight:700;">45 jogadores</span> por sala
+      </div>
+      <button id="btn-confirm-create" class="btn btn-cyan" style="width:100%;padding:15px;">🚀 CRIAR E ENTRAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN ROOM -->
+<div id="modal-join" class="modal-backdrop hidden">
+  <div class="modal-box">
+    <button class="modal-close" data-close="modal-join">✕</button>
+    <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;color:var(--pink);margin-bottom:22px;">🚀 ENTRAR EM SALA</div>
+    <label class="field-label">CÓDIGO DA SALA</label>
+    <input id="join-code-input" class="field-input" placeholder="EX: ABC123" maxlength="6"
+      style="font-size:28px;letter-spacing:7px;text-align:center;font-family:'Orbitron',sans-serif;font-weight:900;color:var(--cyan);margin-bottom:14px;text-transform:uppercase;"/>
+    <button id="btn-confirm-join" class="btn btn-pink" style="width:100%;padding:15px;" disabled>ENTRAR NA SALA</button>
+  </div>
+</div>
+
+<!-- COUNTDOWN OVERLAY -->
+<div id="countdown-overlay" class="hidden">
+  <div id="count-num" class="count-num"></div>
+  <div style="font-size:16px;color:var(--muted);letter-spacing:4px;margin-top:12px;">PREPARAR...</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════
+const ALL_QUESTIONS=[
+  {id:1,q:"Qual é a unidade básica da vida?",opts:["Órgão","Tecido","Sistema","Célula"],ans:3},
+  {id:2,q:"Qual organela produz a maior parte do ATP na célula?",opts:["Lisossomo","Ribossomo","Mitocôndria","Núcleo"],ans:2},
+  {id:3,q:"Qual estrutura controla a entrada e saída de substâncias da célula?",opts:["Parede celular","Nucléolo","Citoplasma","Membrana plasmática"],ans:3},
+  {id:4,q:"Onde fica o DNA na maioria das células eucarióticas?",opts:["Ribossomo","Membrana plasmática","Complexo golgiense","Núcleo"],ans:3},
+  {id:5,q:"Onde ocorre a fotossíntese?",opts:["Mitocôndria","Lisossomo","Vacúolo","Cloroplasto"],ans:3},
+  {id:6,q:"Qual organela sintetiza proteínas?",opts:["Mitocôndria","Núcleo","Lisossomo","Ribossomo"],ans:3},
+  {id:7,q:"O que caracteriza as células procarióticas?",opts:["Possuem núcleo verdadeiro","Não possuem núcleo definido","Não possuem membrana plasmática","Sempre formam tecidos"],ans:1},
+  {id:8,q:"Qual processo produz duas células geneticamente iguais?",opts:["Meiose","Fecundação","Fermentação","Mitose"],ans:3},
+  {id:9,q:"Qual processo forma gametas?",opts:["Mitose","Fotossíntese","Difusão","Meiose"],ans:3},
+  {id:10,q:"O que é um alelo dominante?",opts:["Expressa-se mesmo em dose simples","Só aparece em dose dupla","Não participa da herança","É sempre recessivo"],ans:0},
+  {id:11,q:"Qual processo explica a adaptação dos seres vivos ao longo do tempo?",opts:["Respiração celular","Osmose","Seleção natural","Fototropismo"],ans:2},
+  {id:12,q:"Como se chama a unidade hereditária?",opts:["Cromossomo","Tecido","Gene","Alelo"],ans:2},
+  {id:13,q:"Como chamamos a constituição genética de um indivíduo?",opts:["Fenótipo","Habitat","Nicho","Genótipo"],ans:3},
+  {id:14,q:"Como chamamos as características observáveis?",opts:["Genótipo","Habitat","Mutação","Fenótipo"],ans:3},
+  {id:15,q:"O que compõe um ecossistema?",opts:["Apenas animais","Apenas plantas","Somente água e solo","Seres vivos e fatores não vivos"],ans:3},
+  {id:16,q:"Qual gás é liberado pelas plantas na fotossíntese?",opts:["Carbono","Nitrogênio","Hidrogênio","Oxigênio"],ans:3},
+  {id:17,q:"Qual gás é consumido na fotossíntese?",opts:["Oxigênio","Hélio","Metano","Dióxido de carbono"],ans:3},
+  {id:18,q:"Qual pigmento dá a cor verde às folhas?",opts:["Melanina","Hemoglobina","Caroteno","Clorofila"],ans:3},
+  {id:19,q:"Qual tecido transporta água e sais minerais nas plantas?",opts:["Floema","Epiderme","Meristema","Xilema"],ans:3},
+  {id:20,q:"Qual tecido transporta açúcares nas plantas?",opts:["Xilema","Parênquima","Súber","Floema"],ans:3},
+  {id:21,q:"Qual é a função principal das enzimas?",opts:["Produzir DNA","Armazenar lipídios","Formar tecidos","Acelerar reações químicas"],ans:3},
+  {id:22,q:"Qual é o pH considerado neutro?",opts:["0","5","14","7"],ans:3},
+  {id:23,q:"Qual molécula é a principal moeda de energia da célula?",opts:["DNA","RNA","Glicose","ATP"],ans:3},
+  {id:24,q:"Qual célula sanguínea transporta oxigênio?",opts:["Leucócito","Plaqueta","Neurônio","Hemácia"],ans:3},
+  {id:25,q:"Qual proteína do sangue transporta oxigênio?",opts:["Insulina","Amilase","Actina","Hemoglobina"],ans:3},
+  {id:26,q:"Qual órgão bombeia o sangue?",opts:["Fígado","Pulmão","Estômago","Coração"],ans:3},
+  {id:27,q:"Qual estrutura dos pulmões realiza a troca gasosa?",opts:["Traqueia","Diafragma","Pleura","Alvéolos"],ans:3},
+  {id:28,q:"Onde começa a digestão do amido?",opts:["Estômago","Intestino grosso","Esôfago","Boca"],ans:3},
+  {id:29,q:"Onde ocorre a maior absorção de nutrientes?",opts:["Estômago","Esôfago","Intestino grosso","Intestino delgado"],ans:3},
+  {id:30,q:"Qual célula transmite impulsos nervosos?",opts:["Hemácia","Osteócito","Espermatócito","Neurônio"],ans:3},
+  {id:31,q:"Qual hormônio reduz a glicose no sangue?",opts:["Adrenalina","Tiroxina","Melatonina","Insulina"],ans:3},
+  {id:32,q:"O que são anticorpos?",opts:["Hormônios sexuais","Lipídios estruturais","Vitaminas","Proteínas de defesa"],ans:3},
+  {id:33,q:"Como são classificados os vírus quanto à organização celular?",opts:["Procariontes","Eucariontes","Pluricelulares","Acelulares"],ans:3},
+  {id:34,q:"Qual molécula guarda a informação genética?",opts:["ATP","Lipídio","Quitina","DNA"],ans:3},
+  {id:35,q:"Como se chama o processo de copiar DNA em RNA?",opts:["Tradução","Replicação","Fecundação","Transcrição"],ans:3},
+  {id:36,q:"Como se chama o processo de formar proteína a partir do RNA?",opts:["Transcrição","Difusão","Osmose","Tradução"],ans:3},
+  {id:37,q:"Quantos pares de cromossomos o ser humano possui normalmente?",opts:["12 pares","46 pares","50 pares","23 pares"],ans:3},
+  {id:38,q:"O que é biodiversidade?",opts:["Quantidade de água do planeta","Número de doenças","Volume de rochas","Variedade de seres vivos"],ans:3},
+  {id:39,q:"O que é mutação?",opts:["Troca de nutrientes","Mudança de habitat","Tipo de reprodução","Alteração no material genético"],ans:3},
+  {id:40,q:"O que é especiação?",opts:["Formação de novas espécies","Desaparecimento de genes","Criação de órgãos","Mistura de ecossistemas"],ans:0},
+  {id:41,q:"Qual estrutura protege e ajuda na dispersão das sementes?",opts:["Raiz","Cloroplasto","Estômato","Fruto"],ans:3},
+  {id:42,q:"Qual substância forma a parede celular das plantas?",opts:["Quitina","Glicogênio","Hemoglobina","Celulose"],ans:3},
+  {id:43,q:"Qual substância forma a parede celular dos fungos?",opts:["Celulose","Amido","Lipase","Quitina"],ans:3},
+  {id:44,q:"Qual é a principal função dos lisossomos?",opts:["Produção de ATP","Síntese de DNA","Fotossíntese","Digestão intracelular"],ans:3},
+  {id:45,q:"Qual processo produz energia a partir da glicose com oxigênio?",opts:["Fotossíntese","Difusão","Evaporação","Respiração celular aeróbia"],ans:3},
+  {id:46,q:"Qual fermentação é realizada por leveduras?",opts:["Láctica","Aeróbia","Simbiótica","Alcoólica"],ans:3},
+  {id:47,q:"Quais vasos levam o sangue para fora do coração?",opts:["Veias","Capilares","Vênulas","Artérias"],ans:3},
+  {id:48,q:"Qual órgão produz a bile?",opts:["Pâncreas","Rim","Baço","Fígado"],ans:3},
+  {id:49,q:"Qual órgão armazena a bile?",opts:["Bexiga","Coração","Pulmão","Vesícula biliar"],ans:3},
+  {id:50,q:"Qual sistema defende o corpo contra agentes invasores?",opts:["Sistema muscular","Sistema respiratório","Sistema ósseo","Sistema imunológico"],ans:3},
+];
+
+const SKINS=[
+  {id:"dna",emoji:"🧬",name:"DNA Master",color:"#00FF88",xpRequired:0},
+  {id:"atom",emoji:"⚛️",name:"Átomo",color:"#00E5FF",xpRequired:0},
+  {id:"micro",emoji:"🔬",name:"Cientista",color:"#A855F7",xpRequired:200},
+  {id:"alien",emoji:"👽",name:"Alienígena",color:"#FF0066",xpRequired:500},
+  {id:"robot",emoji:"🤖",name:"Robô",color:"#FFD700",xpRequired:800},
+  {id:"dino",emoji:"🦕",name:"Paleontólogo",color:"#FF6B35",xpRequired:1200},
+  {id:"crown",emoji:"👑",name:"Campeão",color:"#FFD700",xpRequired:2000},
+  {id:"galaxy",emoji:"🌌",name:"Cosmólogo",color:"#6366F1",xpRequired:5000},
+];
+
+const MISSIONS=[
+  {id:1,title:"Primeira Partida",desc:"Complete 1 partida",xp:50,icon:"🎮",target:1,stat:"games"},
+  {id:2,title:"Atirador Certeiro",desc:"Acerte 10 questões",xp:100,icon:"🎯",target:10,stat:"correct"},
+  {id:3,title:"Em Chamas!",desc:"Acerte 5 seguidas",xp:200,icon:"🔥",target:5,stat:"streak"},
+  {id:4,title:"Anfitrião",desc:"Crie uma sala",xp:75,icon:"🏠",target:1,stat:"hosted"},
+  {id:5,title:"Social",desc:"Entre em 3 salas",xp:150,icon:"👥",target:3,stat:"joined"},
+  {id:6,title:"Maratonista",desc:"Complete 10 partidas",xp:500,icon:"🏃",target:10,stat:"games"},
+];
+
+const GLOBAL_BOARD=[
+  {name:"DnaHacker",xp:9800,skinId:"robot"},
+  {name:"NeuronBot",xp:7200,skinId:"atom"},
+  {name:"CélulaX",xp:5500,skinId:"alien"},
+  {name:"BioCrush",xp:3100,skinId:"micro"},
+  {name:"GeneMaster",xp:2400,skinId:"dino"},
+];
+
+const SKIN_MAP=Object.fromEntries(SKINS.map(s=>[s.id,s]));
+const OPT_COLORS=["#FF6B35","#00E5FF","#00FF88","#A855F7"];
+const OPT_LABELS=["A","B","C","D"];
+const MEDALS=["🥇","🥈","🥉"];
+const MAX_PLAYERS=45;
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let user={id:"user1",name:"Jogador",xp:0,skinId:"dna",stats:{games:0,correct:0,streak:0,hosted:0,joined:0}};
+let currentScreen="login";
+let roomConfig=null;
+let gameState=null;
+let gameTimer=null;
+let prevScreen=null;
+
+// ═══════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════
+const shuffle=arr=>[...arr].sort(()=>Math.random()-.5);
+const genCode=()=>Math.random().toString(36).substring(2,8).toUpperCase();
+
+function getLevel(xp){
+  let lv=1,rem=xp;
+  while(rem>=lv*500){rem-=lv*500;lv++;}
+  return{level:lv,rem,needed:lv*500};
+}
+
+function calcScore(timeLeft,maxTime){
+  return Math.max(50,Math.round(1000*(0.25+0.75*(timeLeft/maxTime))));
+}
+
+function prepareQuestion(q){
+  const indexed=q.opts.map((opt,i)=>({opt,correct:i===q.ans}));
+  const sh=shuffle(indexed);
+  return{...q,displayOpts:sh.map(x=>x.opt),correctDisplayIdx:sh.findIndex(x=>x.correct)};
+}
+
+function makeSkinBadge(skinId,size=36){
+  const sk=SKIN_MAP[skinId]||SKINS[0];
+  const div=document.createElement("div");
+  div.className="skin-badge";
+  div.style.cssText=`width:${size}px;height:${size}px;background:radial-gradient(circle at 35% 35%,${sk.color}28,${sk.color}11);border:2px solid ${sk.color};font-size:${size*0.52}px;`;
+  div.textContent=sk.emoji;
+  return div;
+}
+
+function makeSkinBadgeHTML(skinId,size=36){
+  const sk=SKIN_MAP[skinId]||SKINS[0];
+  return`<div class="skin-badge" style="width:${size}px;height:${size}px;background:radial-gradient(circle at 35% 35%,${sk.color}28,${sk.color}11);border:2px solid ${sk.color};font-size:${Math.round(size*0.52)}px;flex-shrink:0;">${sk.emoji}</div>`;
+}
+
+// ═══════════════════════════════════════
+//  BACKGROUND STARS
+// ═══════════════════════════════════════
+function initBackground(){
+  const canvas=document.getElementById("bg-canvas");
+  const orbs=[
+    {top:"-30%",right:"-15%",size:700,col:"rgba(0,229,255,.05)"},
+    {bottom:"-25%",left:"-10%",size:600,col:"rgba(255,0,102,.04)"},
+    {top:"40%",right:"30%",size:400,col:"rgba(168,85,247,.03)"},
+  ];
+  orbs.forEach(o=>{
+    const d=document.createElement("div");
+    d.className="glow-orb";
+    d.style.cssText=`width:${o.size}px;height:${o.size}px;background:radial-gradient(circle,${o.col} 0%,transparent 70%);${o.top?`top:${o.top};`:""}${o.bottom?`bottom:${o.bottom};`:""}${o.left?`left:${o.left};`:""}${o.right?`right:${o.right};`:""}`;
+    canvas.appendChild(d);
+  });
+  for(let i=0;i<90;i++){
+    const s=document.createElement("div");
+    s.className="star";
+    const x=(i*137.508)%100,y=(i*79.3)%100,sz=0.8+(i%3)*0.6;
+    s.style.cssText=`left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;animation:twinkle ${2+(i*.06)%3}s ${(i*.07)%5}s ease-in-out infinite;`;
+    canvas.appendChild(s);
+  }
+}
+
+// ═══════════════════════════════════════
+//  SCREEN NAVIGATION
+// ═══════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll(".screen-wrap").forEach(el=>{
+    el.classList.add("hidden");
+    el.classList.remove("screen");
+  });
+  const el=document.getElementById("screen-"+id);
+  if(!el)return;
+  el.classList.remove("hidden");
+  requestAnimationFrame(()=>el.classList.add("screen"));
+  currentScreen=id;
+}
+
+// ═══════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════
+function initLogin(){
+  const decs=["🧬","🔬","⚛️","🦠","🧫","🦋"];
+  const pos=[[8,12],[88,18],[5,72],[92,65],[50,6],[50,88]];
+  const wrap=document.getElementById("login-decorations");
+  decs.forEach((e,i)=>{
+    const d=document.createElement("div");
+    d.style.cssText=`position:absolute;left:${pos[i][0]}%;top:${pos[i][1]}%;font-size:48px;opacity:.18;animation:float ${4+i*.4}s ${i*.5}s ease-in-out infinite;pointer-events:none;z-index:0;`;
+    d.textContent=e;
+    wrap.appendChild(d);
+  });
+
+  document.getElementById("btn-google-login").addEventListener("click",()=>{
+    const btn=document.getElementById("btn-google-login");
+    btn.innerHTML=`<div style="width:20px;height:20px;border:2.5px solid #bbb;border-top-color:#333;border-radius:50%;animation:spin .7s linear infinite;"></div> Entrando...`;
+    btn.disabled=true;
+    setTimeout(()=>{
+      showScreen("home");
+      renderHome();
+    },1300);
+  });
+}
+
+// ═══════════════════════════════════════
+//  HOME
+// ═══════════════════════════════════════
+function renderHome(){
+  const {level,rem,needed}=getLevel(user.xp);
+  const sk=SKIN_MAP[user.skinId]||SKINS[0];
+
+  // top bar
+  const skinWrap=document.getElementById("home-skin-badge");
+  skinWrap.innerHTML="";
+  skinWrap.appendChild(makeSkinBadge(user.skinId,38));
+  document.getElementById("home-player-name").textContent=user.name;
+  document.getElementById("home-lv-badge").textContent="NV "+level;
+  document.getElementById("home-xp-fill").style.width=((rem/needed)*100)+"%";
+  document.getElementById("home-xp-text").textContent=rem+"/"+needed;
+
+  // banner
+  document.getElementById("banner-skin-float").textContent=sk.emoji;
+  document.getElementById("banner-name").textContent=user.name;
+  document.getElementById("banner-stats").textContent=`Nível ${level} • ${user.xp.toLocaleString()} XP • ${user.stats?.games||0} partidas`;
+
+  // missions
+  const mgrid=document.getElementById("missions-grid");
+  mgrid.innerHTML="";
+  MISSIONS.forEach(m=>{
+    const prog=Math.min(user.stats?.[m.stat]||0,m.target);
+    const done=prog>=m.target;
+    const pct=(prog/m.target)*100;
+    mgrid.innerHTML+=`
+      <div class="mission-card ${done?"mission-done":""}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:22px;">${m.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:${done?"var(--green)":"var(--text)"};">${m.title}${done?" ✓":""}</div>
+            <div style="font-size:11px;color:var(--muted);">${m.desc}</div>
+          </div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--gold);font-weight:700;">+${m.xp}XP</div>
+        </div>
+        <div class="mission-prog"><div class="mission-fill ${done?"done":""}" style="width:${pct}%;"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:right;">${prog}/${m.target}</div>
+      </div>`;
+  });
+
+  // global ranking
+  const gl=document.getElementById("global-ranking-list");
+  gl.innerHTML="";
+  const gb=[...GLOBAL_BOARD,{name:user.name,xp:user.xp,skinId:user.skinId,isMe:true}]
+    .sort((a,b)=>b.xp-a.xp);
+  gb.forEach((p,i)=>{
+    gl.innerHTML+=`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 7px;border-radius:9px;margin-bottom:5px;background:${p.isMe?"rgba(0,229,255,0.06)":"transparent"};border:1px solid ${p.isMe?"var(--cyan)":"transparent"};">
+        <div style="width:22px;font-size:${i<3?16:11}px;text-align:center;color:var(--muted);font-family:'Orbitron',sans-serif;font-weight:700;">${i<3?MEDALS[i]:i+1}</div>
+        ${makeSkinBadgeHTML(p.skinId,28)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${p.isMe?"var(--cyan)":i===0?"var(--gold)":"var(--text)"};">${p.name}${p.isMe?" (você)":""}</div>
+          <div style="font-size:11px;color:var(--muted);">${p.xp.toLocaleString()} XP</div>
+        </div>
+      </div>`;
+  });
+}
+
+function initHome(){
+  document.getElementById("home-profile-btn").addEventListener("click",()=>{
+    showScreen("profile");renderProfile();
+  });
+  document.getElementById("btn-create-room").addEventListener("click",()=>openModal("modal-create"));
+  document.getElementById("btn-join-room").addEventListener("click",()=>openModal("modal-join"));
+  document.getElementById("btn-solo").addEventListener("click",()=>{
+    startRoom({code:"SOLO",name:"Solo",qCount:10,timePerQ:20,isHost:true,isSolo:true,isPrivate:false});
+  });
+  document.getElementById("btn-profile").addEventListener("click",()=>{
+    showScreen("profile");renderProfile();
+  });
+}
+
+// ═══════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.remove("hidden");}
+function closeModal(id){document.getElementById(id).classList.add("hidden");}
+
+function initModals(){
+  document.querySelectorAll(".modal-close").forEach(btn=>{
+    btn.addEventListener("click",()=>closeModal(btn.dataset.close));
+  });
+  document.querySelectorAll(".modal-backdrop").forEach(m=>{
+    m.addEventListener("click",e=>{if(e.target===m)closeModal(m.id);});
+  });
+
+  // create room
+  const toggle=document.getElementById("create-is-private");
+  toggle.addEventListener("change",()=>{
+    const priv=toggle.checked;
+    document.getElementById("vis-toggle-label").textContent=priv?"Sala Privada":"Sala Pública";
+    document.getElementById("vis-toggle-desc").textContent=priv?"Apenas com código de convite":"Aparece na listagem de salas";
+    document.getElementById("vis-toggle-icon").textContent=priv?"🔒":"🌐";
+  });
+
+  document.getElementById("btn-confirm-create").addEventListener("click",()=>{
+    const name=document.getElementById("create-room-name").value.trim()||"Minha Sala";
+    const qCount=parseInt(document.getElementById("create-qcount").value);
+    const timePerQ=parseInt(document.getElementById("create-time").value);
+    const isPrivate=document.getElementById("create-is-private").checked;
+    user.stats.hosted=(user.stats.hosted||0)+1;
+    closeModal("modal-create");
+    startRoom({code:genCode(),name,qCount,timePerQ,isHost:true,isSolo:false,isPrivate});
+  });
+
+  // join room
+  const joinInput=document.getElementById("join-code-input");
+  const joinBtn=document.getElementById("btn-confirm-join");
+  joinInput.addEventListener("input",()=>{
+    joinInput.value=joinInput.value.toUpperCase();
+    joinBtn.disabled=joinInput.value.length<4;
+  });
+  joinBtn.addEventListener("click",()=>{
+    const code=joinInput.value.trim();
+    if(code.length<4)return;
+    user.stats.joined=(user.stats.joined||0)+1;
+    closeModal("modal-join");
+    joinInput.value="";
+    joinBtn.disabled=true;
+    startRoom({code,name:"Sala #"+code,qCount:10,timePerQ:20,isHost:false,isSolo:false,isPrivate:false});
+  });
+}
+
+// ═══════════════════════════════════════
+//  LOBBY
+// ═══════════════════════════════════════
+function startRoom(cfg){
+  roomConfig=cfg;
+  showScreen("lobby");
+  renderLobby();
+}
+
+function renderLobby(){
+  document.getElementById("lobby-code").textContent=roomConfig.code;
+  document.getElementById("lobby-qcount").textContent=roomConfig.qCount;
+  document.getElementById("lobby-time").textContent=roomConfig.timePerQ+"s";
+
+  // visibility badge
+  const visBadge=document.getElementById("lobby-visibility-badge");
+  if(roomConfig.isSolo){
+    visBadge.innerHTML=`<span class="vis-badge vis-public">⚡ MODO SOLO</span>`;
+  } else if(roomConfig.isPrivate){
+    visBadge.innerHTML=`<span class="vis-badge vis-private">🔒 SALA PRIVADA</span>`;
+  } else {
+    visBadge.innerHTML=`<span class="vis-badge vis-public">🌐 SALA PÚBLICA</span>`;
+  }
+
+  // players — just the current user, no bots
+  const players=[{id:user.id,name:user.name,skinId:user.skinId,isHost:roomConfig.isHost}];
+  renderLobbyPlayers(players);
+
+  // host controls
+  const hostCtrl=document.getElementById("lobby-host-controls");
+  const guestWait=document.getElementById("lobby-guest-waiting");
+  if(roomConfig.isHost){
+    hostCtrl.innerHTML=`<button id="btn-start-game" class="btn btn-cyan" style="width:100%;padding:16px;font-size:13px;">🚀 INICIAR PARTIDA</button>`;
+    guestWait.classList.add("hidden");
+    document.getElementById("btn-start-game").addEventListener("click",()=>startCountdown(players));
+  } else {
+    hostCtrl.innerHTML="";
+    guestWait.classList.remove("hidden");
+  }
+}
+
+function renderLobbyPlayers(players){
+  document.getElementById("lobby-pcount").textContent=players.length+"/"+MAX_PLAYERS;
+  const list=document.getElementById("lobby-players-list");
+  list.innerHTML="";
+  players.forEach(p=>{
+    list.innerHTML+=`
+      <div class="slide-in" style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surf2);border-radius:11px;border:1px solid var(--border);">
+        ${makeSkinBadgeHTML(p.skinId,34)}
+        <div style="flex:1;font-size:14px;font-weight:700;color:${p.id===user.id?"var(--cyan)":"var(--text)"};">${p.name}</div>
+        ${p.isHost?`<span style="font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);letter-spacing:1px;">HOST ⭐</span>`:""}
+        ${p.id===user.id&&!p.isHost?`<span style="font-family:'Orbitron',sans-serif;font-size:9px;color:var(--cyan);letter-spacing:1px;">VOCÊ</span>`:""}
+      </div>`;
+  });
+}
+
+function startCountdown(lobbyPlayers){
+  const overlay=document.getElementById("countdown-overlay");
+  const numEl=document.getElementById("count-num");
+  overlay.classList.remove("hidden");
+  let c=3;
+  numEl.textContent=c;
+  numEl.style.animation="none";
+  requestAnimationFrame(()=>{numEl.style.animation="countPop .9s ease";});
+  const iv=setInterval(()=>{
+    c--;
+    if(c<=0){
+      clearInterval(iv);
+      overlay.classList.add("hidden");
+      startGame(lobbyPlayers);
+    } else {
+      numEl.textContent=c;
+      numEl.style.animation="none";
+      requestAnimationFrame(()=>{numEl.style.animation="countPop .9s ease";});
+    }
+  },1000);
+}
+
+document.getElementById("btn-lobby-back").addEventListener("click",()=>{
+  showScreen("home");renderHome();
+});
+
+// ═══════════════════════════════════════
+//  GAME
+// ═══════════════════════════════════════
+function startGame(lobbyPlayers){
+  const questions=shuffle(ALL_QUESTIONS).slice(0,roomConfig.qCount).map(prepareQuestion);
+  gameState={
+    questions,
+    qIdx:0,
+    timeLeft:roomConfig.timePerQ,
+    phase:"answering", // answering | reveal
+    selected:null,
+    score:0,
+    correct:0,
+    players:lobbyPlayers.map(p=>({...p,score:0,answered:false,lastCorrect:false})),
+  };
+  showScreen("game");
+  renderGameQuestion();
+  startGameTimer();
+}
+
+function renderGameQuestion(){
+  const {questions,qIdx,players,score}=gameState;
+  const q=questions[qIdx];
+  const total=questions.length;
+
+  document.getElementById("game-prog-fill").style.width=((qIdx/total)*100)+"%";
+  document.getElementById("game-q-num").textContent=qIdx+1;
+  document.getElementById("game-q-total").textContent=total;
+  document.getElementById("game-q-badge").textContent=qIdx+1;
+  document.getElementById("game-score").textContent=score.toLocaleString();
+  document.getElementById("game-question").textContent=q.q;
+  document.getElementById("game-feedback").classList.add("hidden");
+
+  // options
+  const optsWrap=document.getElementById("game-options");
+  optsWrap.innerHTML="";
+  q.displayOpts.forEach((opt,i)=>{
+    const btn=document.createElement("button");
+    btn.className="opt-btn";
+    btn.dataset.idx=i;
+    btn.innerHTML=`
+      <div class="opt-label" style="background:${OPT_COLORS[i]}22;border:1.5px solid ${OPT_COLORS[i]};color:${OPT_COLORS[i]};">${OPT_LABELS[i]}</div>
+      <span style="flex:1;">${opt}</span>`;
+    btn.addEventListener("click",()=>handleAnswer(i));
+    optsWrap.appendChild(btn);
+  });
+
+  renderGameSidebar();
+  updateTimer(gameState.timeLeft);
+}
+
+function renderGameSidebar(){
+  const sorted=[...gameState.players].sort((a,b)=>b.score-a.score);
+  const list=document.getElementById("game-ranking-list");
+  list.innerHTML="";
+  sorted.forEach((p,i)=>{
+    const isMe=p.id===user.id;
+    const bdc=i===0?"var(--gold)":i===1?"#C0C0C0":i===2?"#CD7F32":"var(--border)";
+    list.innerHTML+=`
+      <div class="rank-item ${isMe?"is-me":""}" style="border-color:${isMe?"var(--cyan)":bdc};">
+        <div style="width:17px;text-align:center;font-family:'Orbitron',sans-serif;font-size:${i<3?14:10}px;color:var(--muted);font-weight:700;">${i<3?MEDALS[i]:i+1}</div>
+        ${makeSkinBadgeHTML(p.skinId,26)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isMe?"var(--cyan)":"var(--text)"};">${p.name}${isMe?" ★":""}</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:${i===0?"var(--gold)":isMe?"var(--cyan)":"var(--muted)"};">${p.score.toLocaleString()}</div>
+        </div>
+        ${p.answered?`<div style="font-size:12px;">${p.lastCorrect?"✅":"❌"}</div>`:""}
+      </div>`;
+  });
+}
+
+function updateTimer(t){
+  const maxTime=roomConfig.timePerQ;
+  const pct=t/maxTime;
+  const C=2*Math.PI*40;
+  const offset=C*(1-pct);
+  const col=pct>.5?"var(--cyan)":pct>.25?"var(--gold)":"var(--pink)";
+  const circle=document.getElementById("timer-circle");
+  circle.style.strokeDashoffset=offset;
+  circle.style.stroke=col;
+  const txt=document.getElementById("timer-text");
+  txt.textContent=t;
+  txt.style.color=col;
+}
+
+function startGameTimer(){
+  clearInterval(gameTimer);
+  gameTimer=setInterval(()=>{
+    if(gameState.phase!=="answering")return;
+    gameState.timeLeft=Math.max(0,gameState.timeLeft-1);
+    updateTimer(gameState.timeLeft);
+    if(gameState.timeLeft<=0){
+      clearInterval(gameTimer);
+      revealAnswer();
+    }
+  },1000);
+}
+
+function handleAnswer(displayIdx){
+  if(gameState.phase!=="answering"||gameState.selected!==null)return;
+  gameState.selected=displayIdx;
+  clearInterval(gameTimer);
+
+  // mark selected
+  document.querySelectorAll(".opt-btn").forEach((btn,i)=>{
+    if(i===displayIdx)btn.classList.add("selected");
+    btn.disabled=true;
+  });
+
+  revealAnswer();
+}
+
+function revealAnswer(){
+  gameState.phase="reveal";
+  const q=gameState.questions[gameState.qIdx];
+  const correct=q.correctDisplayIdx;
+  const sel=gameState.selected;
+  const isCorrect=sel!==null&&sel===correct;
+
+  // score
+  if(isCorrect){
+    const pts=calcScore(gameState.timeLeft,roomConfig.timePerQ);
+    gameState.score+=pts;
+    gameState.correct++;
+    document.getElementById("game-score").textContent=gameState.score.toLocaleString();
+    showScoreFloat("+"+pts);
+  }
+
+  // update player
+  gameState.players=gameState.players.map(p=>{
+    if(p.id===user.id)return{...p,answered:true,lastCorrect:isCorrect,score:gameState.score};
+    return p;
+  });
+
+  // style options
+  document.querySelectorAll(".opt-btn").forEach((btn,i)=>{
+    btn.disabled=true;
+    btn.classList.remove("selected");
+    if(i===correct){
+      btn.classList.add("correct");
+      btn.innerHTML+=`<span style="font-size:16px;margin-left:auto;">✅</span>`;
+    } else if(i===sel){
+      btn.classList.add("wrong");
+      btn.innerHTML+=`<span style="font-size:16px;margin-left:auto;">❌</span>`;
+    }
+  });
+
+  // feedback
+  const fb=document.getElementById("game-feedback");
+  const fbTitle=document.getElementById("game-feedback-title");
+  const fbSub=document.getElementById("game-feedback-sub");
+  fb.classList.remove("hidden","feedback-correct","feedback-wrong");
+  fb.classList.add(isCorrect?"feedback-correct":"feedback-wrong");
+  fbTitle.style.color=isCorrect?"var(--green)":"var(--pink)";
+  fbTitle.textContent=isCorrect?"🎯 Resposta Correta!":"💡 Resposta Incorreta";
+  const isLast=gameState.qIdx>=gameState.questions.length-1;
+  fbSub.textContent=isLast?"Calculando resultado final...":"Próxima questão em instantes...";
+
+  renderGameSidebar();
+
+  setTimeout(()=>{
+    if(isLast){
+      clearInterval(gameTimer);
+      showResults();
+    } else {
+      gameState.qIdx++;
+      gameState.timeLeft=roomConfig.timePerQ;
+      gameState.phase="answering";
+      gameState.selected=null;
+      gameState.players=gameState.players.map(p=>({...p,answered:false,lastCorrect:false}));
+      renderGameQuestion();
+      startGameTimer();
+    }
+  },2600);
+}
+
+function showScoreFloat(text){
+  const wrap=document.getElementById("score-float-wrap");
+  wrap.innerHTML="";
+  const el=document.createElement("div");
+  el.className="score-float";
+  el.textContent=text;
+  wrap.appendChild(el);
+  setTimeout(()=>{wrap.innerHTML="";},1700);
+}
+
+// ═══════════════════════════════════════
+//  RESULTS
+// ═══════════════════════════════════════
+function showResults(){
+  const myScore=gameState.score;
+  const myCorrect=gameState.correct;
+  const total=gameState.questions.length;
+  const players=gameState.players;
+  const sorted=[...players].sort((a,b)=>b.score-a.score);
+  const myRank=sorted.findIndex(p=>p.id===user.id)+1;
+  const xpGained=Math.round(myScore/4)+(myRank===1?200:myRank===2?100:myRank===3?50:20);
+
+  user.xp+=xpGained;
+  user.stats.games=(user.stats.games||0)+1;
+  user.stats.correct=(user.stats.correct||0)+myCorrect;
+
+  const rankLabels=["CAMPEÃO! 🏆","2º Lugar 🥈","3º Lugar 🥉"];
+  document.getElementById("result-trophy").textContent=myRank<=3?["🏆","🥈","🥉"][myRank-1]:"🎮";
+  document.getElementById("result-rank-label").textContent=myRank<=3?rankLabels[myRank-1]:`${myRank}º Lugar`;
+  document.getElementById("result-score").textContent=myScore.toLocaleString();
+  document.getElementById("result-xp").textContent="+"+xpGained;
+  document.getElementById("result-correct").textContent=myCorrect+"/"+total;
+
+  const rlist=document.getElementById("results-list");
+  rlist.innerHTML="";
+  sorted.forEach((p,i)=>{
+    const isMe=p.id===user.id;
+    rlist.innerHTML+=`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:8px;
+        background:${i===0?"rgba(255,215,0,0.07)":isMe?"rgba(0,229,255,0.06)":"var(--surf2)"};
+        border:1px solid ${i===0?"var(--gold)":isMe?"var(--cyan)":"var(--border)"};
+        animation:slideIn .4s ${i*.06}s both ease;">
+        <div style="width:26px;text-align:center;font-family:'Orbitron',sans-serif;font-size:${i<3?18:12}px;color:var(--muted);font-weight:700;">${i<3?MEDALS[i]:i+1}</div>
+        ${makeSkinBadgeHTML(p.skinId,34)}
+        <div style="flex:1;font-size:14px;font-weight:700;color:${isMe?"var(--cyan)":i===0?"var(--gold)":"var(--text)"};">${p.name}${isMe?" (você)":""}</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:${i===0?"var(--gold)":isMe?"var(--cyan)":"var(--text)"};">${p.score.toLocaleString()}</div>
+      </div>`;
+  });
+
+  showScreen("results");
+}
+
+function initResults(){
+  document.getElementById("btn-results-home").addEventListener("click",()=>{
+    showScreen("home");renderHome();
+  });
+  document.getElementById("btn-results-again").addEventListener("click",()=>{
+    showScreen("lobby");renderLobby();
+  });
+}
+
+// ═══════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════
+function renderProfile(){
+  const {level,rem,needed}=getLevel(user.xp);
+
+  const skBadge=document.getElementById("profile-skin-badge");
+  skBadge.innerHTML="";
+  skBadge.appendChild(makeSkinBadge(user.skinId,80));
+
+  renderProfileName();
+  document.getElementById("profile-level-text").textContent=`Nível ${level} • ${user.xp.toLocaleString()} XP total`;
+  document.getElementById("profile-lv-badge").textContent="NV "+level;
+  document.getElementById("profile-xp-fill").style.width=((rem/needed)*100)+"%";
+  document.getElementById("profile-xp-text").textContent=rem+"/"+needed;
+
+  // stats
+  const stats=[
+    {i:"🎮",l:"Partidas",v:user.stats?.games||0},
+    {i:"🎯",l:"Corretas",v:user.stats?.correct||0},
+    {i:"⭐",l:"Nível",v:level},
+  ];
+  document.getElementById("profile-stats-grid").innerHTML=stats.map(s=>`
+    <div style="text-align:center;background:var(--surf2);border-radius:10px;padding:12px 16px;border:1px solid var(--border);">
+      <div style="font-size:22px;margin-bottom:4px;">${s.i}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--cyan);">${s.v}</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;">${s.l.toUpperCase()}</div>
+    </div>`).join("");
+
+  // skins
+  renderSkinsGrid();
+}
+
+function renderProfileName(){
+  const disp=document.getElementById("profile-name-display");
+  disp.innerHTML=`
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--text);">${user.name}</div>
+    <button id="btn-edit-name" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;color:var(--muted);cursor:pointer;">✏️ editar</button>`;
+  document.getElementById("btn-edit-name").addEventListener("click",()=>{
+    document.getElementById("profile-name-display").classList.add("hidden");
+    document.getElementById("profile-name-edit").classList.remove("hidden");
+    document.getElementById("profile-name-input").value=user.name;
+    document.getElementById("profile-name-input").focus();
+  });
+}
+
+function renderSkinsGrid(){
+  const grid=document.getElementById("skins-grid");
+  grid.innerHTML="";
+  SKINS.forEach(sk=>{
+    const locked=user.xp<sk.xpRequired;
+    const equip=user.skinId===sk.id;
+    const card=document.createElement("div");
+    card.className="skin-card"+( equip?" equipped":"")+(locked?" locked":"");
+    card.style.cssText=`background:${equip?sk.color+"14":"var(--surf2)"};border-color:${equip?sk.color:locked?"var(--border)":"var(--surf3)"};`;
+    card.innerHTML=`
+      ${equip?`<div class="skin-dot" style="background:${sk.color};"></div>`:""}
+      <div style="font-size:38px;margin-bottom:6px;">${sk.emoji}</div>
+      <div style="font-size:11px;font-weight:700;color:${equip?sk.color:"var(--text)"};margin-bottom:3px;">${sk.name}</div>
+      <div style="font-size:10px;color:${equip?"var(--green)":"var(--muted)"};">${locked?"🔒 "+sk.xpRequired+"XP":equip?"✓ Equipado":"Disponível"}</div>`;
+    if(!locked){
+      card.addEventListener("click",()=>{
+        user.skinId=sk.id;
+        renderProfile();
+      });
+    }
+    grid.appendChild(card);
+  });
+}
+
+function initProfile(){
+  document.getElementById("btn-profile-back").addEventListener("click",()=>{
+    showScreen("home");renderHome();
+  });
+  document.getElementById("btn-save-name").addEventListener("click",saveName);
+  document.getElementById("profile-name-input").addEventListener("keydown",e=>{
+    if(e.key==="Enter")saveName();
+  });
+}
+
+function saveName(){
+  const val=document.getElementById("profile-name-input").value.trim();
+  if(val){user.name=val;}
+  document.getElementById("profile-name-display").classList.remove("hidden");
+  document.getElementById("profile-name-edit").classList.add("hidden");
+  renderProfileName();
+  // refresh banner name too if needed
+  document.getElementById("profile-level-text").textContent=`Nível ${getLevel(user.xp).level} • ${user.xp.toLocaleString()} XP total`;
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+initBackground();
+initLogin();
+initHome();
+initModals();
+initResults();
+initProfile();
+showScreen("login");
+</script>
+</body>
+</html>
